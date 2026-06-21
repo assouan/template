@@ -28,3 +28,5 @@ $status = 200;
 ```
 
 The layout receives `$body`, the layout array values, and the same helpers.
+
+Templates may set `$status` when the rendered response should use a specific HTTP code, for example a layout-backed 404 page.
