@@ -26,6 +26,9 @@ class Template
 
         $render = function () use ($data, $path): array {
             $layout = null;
+            $html = static fn (mixed $value): string => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $lines = static fn (mixed $value): string => nl2br($html($value));
+            $url = static fn (mixed $value): string => rawurlencode((string)$value);
 
             if (is_array($data))
             {
