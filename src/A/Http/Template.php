@@ -49,7 +49,7 @@ class Template
         };
 
         $result = $render->call($controller);
-        $body = $this->layout((string)$result['body'], $result['layout'] ?? null, $controller);
+        $body = $this->layout((string)$result['body'], $result['layout'] ?? null, $controller, dirname($path));
 
         return new Response(
             headers: ['Content-Type' => 'text/html; charset=utf-8'],
@@ -57,8 +57,18 @@ class Template
         );
     }
 
-    private function layout(string $body, mixed $layout, object $controller) : string
+    private function layout(string $body, mixed $layout, object $controller, string $directory) : string
     {
+        if (is_string($layout))
+        {
+            return $this->layout_file($body, ['file' => $layout], $controller, $directory);
+        }
+
+        if (is_array($layout) && isset($layout['file']))
+        {
+            return $this->layout_file($body, $layout, $controller, $directory);
+        }
+
         if (!is_array($layout))
         {
             return $body;
@@ -95,5 +105,46 @@ class Template
         };
 
         return $render->call($controller);
+    }
+
+    private function layout_file(string $body, array $layout, object $controller, string $directory) : string
+    {
+        $file = (string)($layout['file'] ?? '');
+        $path = $this->layout_path($file, $directory);
+
+        if (!is_file($path))
+        {
+            throw new \RuntimeException("Layout file not found: {$path}");
+        }
+
+        $render = function () use ($layout, $body, $path): string {
+            $html = static fn (mixed $value): string => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $lines = static fn (mixed $value): string => nl2br($html($value));
+            $url = static fn (mixed $value): string => rawurlencode((string)$value);
+
+            extract($layout, EXTR_SKIP);
+
+            ob_start();
+            include $path;
+
+            return (string)ob_get_clean();
+        };
+
+        return $render->call($controller);
+    }
+
+    private function layout_path(string $file, string $directory) : string
+    {
+        if ($file === '')
+        {
+            return '';
+        }
+
+        if (str_starts_with($file, '/') || preg_match('/^[A-Z]:[\\\\\/]/i', $file))
+        {
+            return $file;
+        }
+
+        return $directory . '/' . $file;
     }
 }
