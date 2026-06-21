@@ -24,11 +24,12 @@ class Template
             throw new \RuntimeException("Template file not found: {$path}");
         }
 
-        $render = function () use ($data, $path): array {
+        $helpers = $this->helpers();
+
+        $render = function () use ($data, $path, $helpers): array {
             $layout = null;
-            $html = static fn (mixed $value): string => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $lines = static fn (mixed $value): string => nl2br($html($value));
-            $url = static fn (mixed $value): string => rawurlencode((string)$value);
+
+            extract($helpers, EXTR_SKIP);
 
             if (is_array($data))
             {
@@ -117,10 +118,10 @@ class Template
             throw new \RuntimeException("Layout file not found: {$path}");
         }
 
-        $render = function () use ($layout, $body, $path): string {
-            $html = static fn (mixed $value): string => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $lines = static fn (mixed $value): string => nl2br($html($value));
-            $url = static fn (mixed $value): string => rawurlencode((string)$value);
+        $helpers = $this->helpers();
+
+        $render = function () use ($layout, $body, $path, $helpers): string {
+            extract($helpers, EXTR_SKIP);
 
             extract($layout, EXTR_SKIP);
 
@@ -131,6 +132,17 @@ class Template
         };
 
         return $render->call($controller);
+    }
+
+    private function helpers() : array
+    {
+        $html = static fn (mixed $value): string => htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        return [
+            'html' => $html,
+            'lines' => static fn (mixed $value): string => nl2br($html($value)),
+            'url' => static fn (mixed $value): string => rawurlencode((string)$value),
+        ];
     }
 
     private function layout_path(string $file, string $directory) : string
