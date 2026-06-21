@@ -19,7 +19,10 @@ Inside a `.phtml` template, three small helpers are available:
 A template can opt into a layout file by setting `$layout`:
 
 ```php
-<?php $layout = ['file' => 'Layout.phtml', 'title' => 'Home']; ?>
+<?php
+$layout = ['file' => 'Layout.phtml', 'title' => 'Home'];
+$status = 200;
+?>
 
 <h1><?=$html($title)?></h1>
 ```

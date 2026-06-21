@@ -28,6 +28,7 @@ class Template
 
         $render = function () use ($data, $path, $helpers): array {
             $layout = null;
+            $status = 200;
 
             extract($helpers, EXTR_SKIP);
 
@@ -46,6 +47,7 @@ class Template
             return [
                 'body' => (string)ob_get_clean(),
                 'layout' => $layout,
+                'status' => $status,
             ];
         };
 
@@ -53,6 +55,7 @@ class Template
         $body = $this->layout((string)$result['body'], $result['layout'] ?? null, $controller, dirname($path));
 
         return new Response(
+            status: (int)($result['status'] ?? 200),
             headers: ['Content-Type' => 'text/html; charset=utf-8'],
             body: $body,
         );
