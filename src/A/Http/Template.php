@@ -15,18 +15,18 @@ class Template
     {
         $class = $method->getDeclaringClass();
         $file = (string)$class->getFileName();
-        $path = $this->path !== ''
+        $template_path = $this->path !== ''
             ? dirname($file) . '/' . $this->path
             : dirname($file) . '/' . basename($file, '.php') . '.phtml';
 
-        if (!is_file($path))
+        if (!is_file($template_path))
         {
-            throw new \RuntimeException("Template file not found: {$path}");
+            throw new \RuntimeException("Template file not found: {$template_path}");
         }
 
         $helpers = $this->helpers();
 
-        $render = function () use ($data, $path, $helpers): array {
+        $render = function () use ($data, $template_path, $helpers): array {
             $layout = null;
             $status = 200;
 
@@ -42,7 +42,7 @@ class Template
             }
 
             ob_start();
-            include $path;
+            include $template_path;
 
             return [
                 'body' => (string)ob_get_clean(),
@@ -52,7 +52,7 @@ class Template
         };
 
         $result = $render->call($controller);
-        $body = $this->layout((string)$result['body'], $result['layout'] ?? null, $controller, dirname($path));
+        $body = $this->layout((string)$result['body'], $result['layout'] ?? null, $controller, dirname($template_path));
 
         return new Response(
             status: (int)($result['status'] ?? 200),
@@ -114,22 +114,22 @@ class Template
     private function layout_file(string $body, array $layout, object $controller, string $directory) : string
     {
         $file = (string)($layout['file'] ?? '');
-        $path = $this->layout_path($file, $directory);
+        $layout_path = $this->layout_path($file, $directory);
 
-        if (!is_file($path))
+        if (!is_file($layout_path))
         {
-            throw new \RuntimeException("Layout file not found: {$path}");
+            throw new \RuntimeException("Layout file not found: {$layout_path}");
         }
 
         $helpers = $this->helpers();
 
-        $render = function () use ($layout, $body, $path, $helpers): string {
+        $render = function () use ($layout, $body, $layout_path, $helpers): string {
             extract($helpers, EXTR_SKIP);
 
             extract($layout, EXTR_SKIP);
 
             ob_start();
-            include $path;
+            include $layout_path;
 
             return (string)ob_get_clean();
         };
